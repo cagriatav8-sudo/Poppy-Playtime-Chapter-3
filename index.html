@@ -2,131 +2,156 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Poppy Playtime Chapter 3: Deep Sleep (Web Edition)</title>
+    <title>Poppy Playtime Chapter 3: Deep Sleep</title>
     <style>
-        :root {
-            --catnap-purple: #4a1a63;
-            --smoke-red: #8b0000;
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
+
+        /* --- OYUN ALANI (3D GÖRÜNÜMÜ VEREN KATMANLAR) --- */
+        #game-container {
+            width: 100vw; height: 100vh;
+            perspective: 1000px;
+            display: flex; align-items: center; justify-content: center;
+            background: radial-gradient(circle at center, #111 0%, #000 100%);
         }
 
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            background: #000; color: white; font-family: 'Courier New', Courier, monospace;
-            overflow: hidden;
+        /* --- KIRMIZI GAZ SHADER (DEEP SLEEP) --- */
+        #gas-overlay {
+            position: fixed; inset: 0;
+            background: rgba(150, 0, 0, 0.2);
+            mix-blend-mode: multiply; pointer-events: none; z-index: 10;
+            animation: gasPulse 8s infinite alternate ease-in-out;
         }
 
-        /* --- YEREL SHADER & ATMOSFER (Kırmızı Gaz Sisi) --- */
-        .shader-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.8) 80%),
-                        linear-gradient(rgba(139, 0, 0, 0.1), rgba(139, 0, 0, 0.1));
-            pointer-events: none; z-index: 10;
-            animation: pulse-red-gas 8s infinite alternate;
+        @keyframes gasPulse {
+            0% { opacity: 0.1; } 100% { opacity: 0.4; }
         }
 
-        @keyframes pulse-red-gas {
-            0% { opacity: 0.3; } 100% { opacity: 0.6; }
+        /* --- GERÇEKÇİ GRABPACK ELLERİ --- */
+        .grabpack-container {
+            position: fixed; bottom: 0; width: 100%; height: 40%;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            padding: 0 5%; box-sizing: border-box; pointer-events: none; z-index: 20;
         }
 
-        /* --- ANA MENÜ --- */
-        .menu-screen {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            height: 100vh; position: relative; z-index: 20;
-            background: url('https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&q=80') center/cover;
+        .hand {
+            width: 220px; height: 300px;
+            background-size: contain; background-repeat: no-repeat;
+            transition: transform 0.1s ease-out, bottom 0.2s;
+            position: relative;
         }
 
-        h1 { font-size: 5rem; text-shadow: 0 0 30px var(--catnap-purple); color: #fff; margin-bottom: 50px; }
-
-        .menu-btn {
-            width: 300px; padding: 15px; margin: 10px;
-            background: rgba(255,255,255,0.1); border: 2px solid var(--catnap-purple);
-            color: #fff; cursor: pointer; font-size: 1.2rem; transition: 0.3s;
+        #blue-hand {
+            background-image: url('https://i.ibb.co/L6v3YgG/blue-hand.png'); /* Temsili: Gerçekçi mavi el görseli gelmeli */
+            background-color: #0044ff; border-radius: 50px 50px 0 0;
+            box-shadow: 0 0 50px rgba(0, 68, 255, 0.5), inset -10px 0 30px #000;
         }
 
-        .menu-btn:hover { background: var(--catnap-purple); box-shadow: 0 0 20px var(--catnap-purple); }
-
-        /* --- AYARLAR MENÜSÜ --- */
-        #settings-panel {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9); border: 3px solid #333; padding: 40px; z-index: 100;
+        #red-hand {
+            background-image: url('https://i.ibb.co/Xz9tN7X/red-hand.png'); /* Temsili: Gerçekçi kırmızı el görseli gelmeli */
+            background-color: #ff0000; border-radius: 50px 50px 0 0;
+            box-shadow: 0 0 50px rgba(255, 0, 0, 0.5), inset 10px 0 30px #000;
         }
 
-        /* --- OYUN İÇİ ARAYÜZ (GAMEPLAY) --- */
-        #game-play { display: none; padding: 50px; height: 100vh; text-align: center; }
-        
-        .grab-pack {
-            position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-between;
-            padding: 0 100px; box-sizing: border-box;
+        /* --- ANA MENÜ & AYARLAR --- */
+        #ui-overlay {
+            position: fixed; top: 20px; left: 20px; z-index: 30;
+            color: white; text-shadow: 2px 2px 10px #000;
         }
-        .hand { width: 150px; height: 150px; filter: drop-shadow(0 0 10px #000); }
+
+        .stat-bar { width: 200px; height: 10px; background: #333; margin: 5px 0; border: 1px solid #555; }
+        #stamina-fill { width: 100%; height: 100%; background: #7b2cbf; transition: 0.2s; }
+
+        /* --- HAREKET EFEKTİ (DİNAMİK KORİDOR) --- */
+        #corridor {
+            width: 200%; height: 200%;
+            background-image: repeating-linear-gradient(90deg, #111 0px, #111 50px, #222 50px, #222 100px);
+            position: absolute; transform-style: preserve-3d;
+            transition: transform 0.1s linear;
+        }
     </style>
 </head>
 <body>
 
-<div class="shader-overlay" id="shader"></div>
+    <div id="gas-overlay"></div>
 
-<div id="main-menu" class="menu-screen">
-    <h1>CHAPTER 3</h1>
-    <p style="color: red; letter-spacing: 5px;">DEEP SLEEP</p>
-    <button class="menu-btn" onclick="startGame()">OYUNA BAŞLA</button>
-    <button class="menu-btn" onclick="toggleSettings()">AYARLAR</button>
-    <button class="menu-btn" onclick="alert('Henüz çıkış yok Musab...')">ÇIKIŞ</button>
-</div>
-
-<div id="settings-panel">
-    <h2>GRAFİK AYARLARI</h2>
-    <hr>
-    <p>Gölge Kalitesi: <input type="range" min="1" max="100" value="80"></p>
-    <p>Gaz Yoğunluğu (Shader): <input type="range" min="1" max="100" value="50" onchange="updateShader(this.value)"></p>
-    <p>V-Sync: <input type="checkbox" checked></p>
-    <button class="menu-btn" onclick="toggleSettings()">KAPAT</button>
-</div>
-
-<div id="game-play">
-    <h2 id="story-text">Playtime Co. Yetimhanesi'ne giriş yaptın...</h2>
-    <p id="sub-text">CatNap seni izliyor.</p>
-    
-    <div class="grab-pack">
-        <img src="https://img.icons8.com/color/144/hand.png" class="hand" style="filter: hue-rotate(180deg);" alt="Mavi El">
-        <img src="https://img.icons8.com/color/144/hand.png" class="hand" alt="Kırmızı El">
+    <div id="ui-overlay">
+        <h2 style="color: #7b2cbf; margin: 0;">CATNAP IS WATCHING</h2>
+        <div class="stat-bar"><div id="stamina-fill"></div></div>
+        <p id="coords">Konum: X: 0, Z: 0</p>
+        <p id="objective">Görev: Gaz maskesini bul ve Playcare'e sız.</p>
     </div>
-</div>
 
-<script>
-    // HİKAYE MANTIĞI: 3 SAATLİK AKIŞIN ÖZETİ
-    const hikayeDuraklari = [
-        { text: "Gas Production merkezine ulaştın.", sub: "Kırmızı gaz dolmaya başlıyor..." },
-        { text: "Ollie sana yeni bir GrabPack geliştirmesi verdi.", sub: "Mor eli kullanarak zıplayabilirsin." },
-        { text: "Miss Delight okulu koruyor...", sub: "Hareket etme, o seni görebilir." },
-        { text: "CatNap kabusuna girdin.", sub: "Gördüğün her şey bir halüsinasyon!" },
-        { text: "Final: Prototip CatNap'i aldı.", sub: "Deep Sleep bitti... Şimdilik." }
-    ];
+    <div id="game-container">
+        <div id="corridor"></div>
+    </div>
 
-    let currentStep = 0;
+    <div class="grabpack-container">
+        <div id="blue-hand" class="hand"></div>
+        <div id="red-hand" class="hand"></div>
+    </div>
 
-    function startGame() {
-        document.getElementById('main-menu').style.display = 'none';
-        document.getElementById('game-play').style.display = 'block';
+    <script>
+        const corridor = document.getElementById('corridor');
+        const blueHand = document.getElementById('blue-hand');
+        const redHand = document.getElementById('red-hand');
         
-        // Hikaye döngüsü (Temsili hızlandırılmış akış)
-        setInterval(() => {
-            if(currentStep < hikayeDuraklari.length) {
-                document.getElementById('story-text').innerText = hikayeDuraklari[currentStep].text;
-                document.getElementById('sub-text').innerText = hikayeDuraklari[currentStep].sub;
-                currentStep++;
+        let posX = 0, posZ = 0;
+        let keys = {};
+
+        // Klavye Kontrolleri (WASD)
+        document.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+        document.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+        // Mouse ile El Hareket Ettirme & Bakış
+        document.addEventListener('mousemove', (e) => {
+            let moveX = (e.clientX - window.innerWidth / 2) / 20;
+            let moveY = (e.clientY - window.innerHeight / 2) / 20;
+            
+            blueHand.style.transform = `translate(${moveX - 20}px, ${moveY + 10}px) rotate(${moveX/2}deg)`;
+            redHand.style.transform = `translate(${moveX + 20}px, ${moveY + 10}px) rotate(${moveX/2}deg)`;
+            corridor.style.transform = `rotateY(${-moveX/5}deg) rotateX(${moveY/5}deg)`;
+        });
+
+        // Tıklama ile El Ateşleme
+        document.addEventListener('mousedown', (e) => {
+            if(e.button === 0) { // Sol Tık (Mavi)
+                blueHand.style.bottom = "150px";
+                setTimeout(() => blueHand.style.bottom = "0", 200);
+            } else if(e.button === 2) { // Sağ Tık (Kırmızı)
+                redHand.style.bottom = "150px";
+                setTimeout(() => redHand.style.bottom = "0", 200);
             }
-        }, 10000); // Her 10 saniyede bir bölüm geçişi (Geliştirilebilir)
-    }
+        });
+        window.oncontextmenu = () => false; // Sağ tık menüsünü engelle
 
-    function toggleSettings() {
-        const panel = document.getElementById('settings-panel');
-        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-    }
+        // Oyun Döngüsü (Hareket ve 3 Saatlik Akış Mantığı)
+        function gameLoop() {
+            let speed = 5;
+            let moved = false;
 
-    function updateShader(val) {
-        document.getElementById('shader').style.opacity = val / 100;
-    }
-</script>
+            if (keys['w']) { posZ += speed; moved = true; }
+            if (keys['s']) { posZ -= speed; moved = true; }
+            if (keys['a']) { posX += speed; moved = true; }
+            if (keys['d']) { posX -= speed; moved = true; }
 
+            if (moved) {
+                // Kamera sallantısı (Yürüme efekti)
+                let bobbing = Math.sin(Date.now() / 150) * 5;
+                corridor.style.backgroundPosition = `${posX}px ${posZ}px`;
+                document.getElementById('game-container').style.transform = `translateY(${bobbing}px)`;
+                document.getElementById('coords').innerText = `Konum: X: ${Math.floor(posX)}, Z: ${Math.floor(posZ)}`;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+
+        // 3 Saatlik Senaryo Tetikleyici (Özet)
+        setTimeout(() => {
+            document.getElementById('objective').innerText = "GÖREV: Miss Delight'tan kaç!";
+            document.body.style.backgroundColor = "#1a0000";
+        }, 10000); // Temsili: 10 saniye sonra bölüm değişir
+    </script>
 </body>
 </html>
