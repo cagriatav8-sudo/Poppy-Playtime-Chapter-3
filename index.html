@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Poppy Playtime Chapter 3: Deep Sleep (Web Edition)</title>
+    <style>
+        :root {
+            --catnap-purple: #4a1a63;
+            --smoke-red: #8b0000;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background: #000; color: white; font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+        }
+
+        /* --- YEREL SHADER & ATMOSFER (Kırmızı Gaz Sisi) --- */
+        .shader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.8) 80%),
+                        linear-gradient(rgba(139, 0, 0, 0.1), rgba(139, 0, 0, 0.1));
+            pointer-events: none; z-index: 10;
+            animation: pulse-red-gas 8s infinite alternate;
+        }
+
+        @keyframes pulse-red-gas {
+            0% { opacity: 0.3; } 100% { opacity: 0.6; }
+        }
+
+        /* --- ANA MENÜ --- */
+        .menu-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; position: relative; z-index: 20;
+            background: url('https://images.unsplash.com/photo-1509248961158-e54f6934749c?auto=format&fit=crop&q=80') center/cover;
+        }
+
+        h1 { font-size: 5rem; text-shadow: 0 0 30px var(--catnap-purple); color: #fff; margin-bottom: 50px; }
+
+        .menu-btn {
+            width: 300px; padding: 15px; margin: 10px;
+            background: rgba(255,255,255,0.1); border: 2px solid var(--catnap-purple);
+            color: #fff; cursor: pointer; font-size: 1.2rem; transition: 0.3s;
+        }
+
+        .menu-btn:hover { background: var(--catnap-purple); box-shadow: 0 0 20px var(--catnap-purple); }
+
+        /* --- AYARLAR MENÜSÜ --- */
+        #settings-panel {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); border: 3px solid #333; padding: 40px; z-index: 100;
+        }
+
+        /* --- OYUN İÇİ ARAYÜZ (GAMEPLAY) --- */
+        #game-play { display: none; padding: 50px; height: 100vh; text-align: center; }
+        
+        .grab-pack {
+            position: absolute; bottom: 0; width: 100%; display: flex; justify-content: space-between;
+            padding: 0 100px; box-sizing: border-box;
+        }
+        .hand { width: 150px; height: 150px; filter: drop-shadow(0 0 10px #000); }
+    </style>
+</head>
+<body>
+
+<div class="shader-overlay" id="shader"></div>
+
+<div id="main-menu" class="menu-screen">
+    <h1>CHAPTER 3</h1>
+    <p style="color: red; letter-spacing: 5px;">DEEP SLEEP</p>
+    <button class="menu-btn" onclick="startGame()">OYUNA BAŞLA</button>
+    <button class="menu-btn" onclick="toggleSettings()">AYARLAR</button>
+    <button class="menu-btn" onclick="alert('Henüz çıkış yok Musab...')">ÇIKIŞ</button>
+</div>
+
+<div id="settings-panel">
+    <h2>GRAFİK AYARLARI</h2>
+    <hr>
+    <p>Gölge Kalitesi: <input type="range" min="1" max="100" value="80"></p>
+    <p>Gaz Yoğunluğu (Shader): <input type="range" min="1" max="100" value="50" onchange="updateShader(this.value)"></p>
+    <p>V-Sync: <input type="checkbox" checked></p>
+    <button class="menu-btn" onclick="toggleSettings()">KAPAT</button>
+</div>
+
+<div id="game-play">
+    <h2 id="story-text">Playtime Co. Yetimhanesi'ne giriş yaptın...</h2>
+    <p id="sub-text">CatNap seni izliyor.</p>
+    
+    <div class="grab-pack">
+        <img src="https://img.icons8.com/color/144/hand.png" class="hand" style="filter: hue-rotate(180deg);" alt="Mavi El">
+        <img src="https://img.icons8.com/color/144/hand.png" class="hand" alt="Kırmızı El">
+    </div>
+</div>
+
+<script>
+    // HİKAYE MANTIĞI: 3 SAATLİK AKIŞIN ÖZETİ
+    const hikayeDuraklari = [
+        { text: "Gas Production merkezine ulaştın.", sub: "Kırmızı gaz dolmaya başlıyor..." },
+        { text: "Ollie sana yeni bir GrabPack geliştirmesi verdi.", sub: "Mor eli kullanarak zıplayabilirsin." },
+        { text: "Miss Delight okulu koruyor...", sub: "Hareket etme, o seni görebilir." },
+        { text: "CatNap kabusuna girdin.", sub: "Gördüğün her şey bir halüsinasyon!" },
+        { text: "Final: Prototip CatNap'i aldı.", sub: "Deep Sleep bitti... Şimdilik." }
+    ];
+
+    let currentStep = 0;
+
+    function startGame() {
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('game-play').style.display = 'block';
+        
+        // Hikaye döngüsü (Temsili hızlandırılmış akış)
+        setInterval(() => {
+            if(currentStep < hikayeDuraklari.length) {
+                document.getElementById('story-text').innerText = hikayeDuraklari[currentStep].text;
+                document.getElementById('sub-text').innerText = hikayeDuraklari[currentStep].sub;
+                currentStep++;
+            }
+        }, 10000); // Her 10 saniyede bir bölüm geçişi (Geliştirilebilir)
+    }
+
+    function toggleSettings() {
+        const panel = document.getElementById('settings-panel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function updateShader(val) {
+        document.getElementById('shader').style.opacity = val / 100;
+    }
+</script>
+
+</body>
+</html>
